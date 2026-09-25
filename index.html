@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TV</title>
+<title>Entertainments</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%230a0a0f'/><rect x='10' y='20' width='80' height='52' rx='6' fill='%23e8c547'/><rect x='18' y='28' width='64' height='36' rx='3' fill='%230a0a0f'/><rect x='38' y='76' width='24' height='6' rx='2' fill='%23e8c547'/><circle cx='50' cy='46' r='8' fill='%23e8c547' opacity='0.3'/><polygon points='46,42 58,46 46,50' fill='%23e8c547'/></svg>" type="image/svg+xml">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%230a0a0f'/><rect x='10' y='20' width='80' height='52' rx='6' fill='%23e8c547'/><rect x='18' y='28' width='64' height='36' rx='3' fill='%230a0a0f'/><rect x='38' y='76' width='24' height='6' rx='2' fill='%23e8c547'/><circle cx='50' cy='46' r='8' fill='%23e8c547' opacity='0.3'/><polygon points='46,42 58,46 46,50' fill='%23e8c547'/></svg>">
-<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22TV%22%2C%22short_name%22%3A%22TV%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0f%22%2C%22theme_color%22%3A%22%23e8c547%22%7D">
+<link rel="manifest" href="data:application/json,%7B%22name%22%3A%22Entertainments%22%2C%22short_name%22%3A%22Ents%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0f%22%2C%22theme_color%22%3A%22%23e8c547%22%7D">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -681,6 +681,36 @@
     margin-left: 6px;
   }
   .type-badge.film { border-color: #7a6fa0; color: #b0a0e0; }
+  .type-badge.book { border-color: var(--green); color: #9fd9b4; }
+
+  /* SECTION TABS */
+  .section-tabs {
+    display: flex;
+    gap: 0;
+    padding: 0 2rem;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  .section-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 22px;
+    cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .section-tab:hover { color: var(--paper); }
+  .section-tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+  @media (max-width: 600px) {
+    .section-tabs { padding: 0 1rem; }
+    .section-tab { padding: 12px 14px; font-size: 0.95rem; }
+    .logo-text { font-size: 1.4rem; }
+  }
   /* HOUSEHOLD SCREEN */
   .household-screen {
     position: fixed;
@@ -829,8 +859,8 @@
         <rect x="2" y="8" width="28" height="18" rx="4" stroke="#0a0a0f" stroke-width="2"/>
       </svg>
     </div>
-    <div class="household-title">Welcome to TV</div>
-    <div class="household-sub">Your shared TV &amp; film tracker</div>
+    <div class="household-title">Welcome to Entertainments</div>
+    <div class="household-sub">Your shared TV, film &amp; book tracker</div>
 
     <div style="background:rgba(232,197,71,0.07);border:1px solid rgba(232,197,71,0.2);border-radius:14px;padding:1.25rem;margin-bottom:1.5rem;text-align:left">
       <div style="font-size:0.8rem;font-weight:500;color:var(--gold);margin-bottom:0.75rem;letter-spacing:0.04em">HOW IT WORKS</div>
@@ -898,7 +928,7 @@
         <rect x="1" y="4" width="20" height="13" rx="3" stroke="#0a0a0f" stroke-width="1.5"/>
       </svg>
     </div>
-    <div class="logo-text">TV</div>
+    <div class="logo-text">Entertainments</div>
   </div>
   <button class="sync-btn" onclick="syncFromDB()" id="syncBtn">↺ Refresh</button>
   <button class="sync-btn" onclick="openHelp()">❓ Help</button>
@@ -910,15 +940,20 @@
   </div>
 </header>
 
+<div class="section-tabs">
+  <div class="section-tab active" data-section="media" onclick="switchSection('media')">📺 TV &amp; Film</div>
+  <div class="section-tab" data-section="books" onclick="switchSection('books')">📚 Books</div>
+</div>
+
 <div class="tabs">
   <div class="tab active" data-tab="watching" onclick="switchTab('watching')">
-    📺 Watching <span class="tab-count" id="count-watching">0</span>
+    <span id="tabIcon-watching">📺</span> <span id="tabLabel-watching">Watching</span> <span class="tab-count" id="count-watching">0</span>
   </div>
   <div class="tab" data-tab="suggested" onclick="switchTab('suggested')">
     ✨ Suggested <span class="tab-count" id="count-suggested">0</span>
   </div>
   <div class="tab" data-tab="watched" onclick="switchTab('watched')">
-    ✅ Watched <span class="tab-count" id="count-watched">0</span>
+    <span id="tabIcon-watched">✅</span> <span id="tabLabel-watched">Watched</span> <span class="tab-count" id="count-watched">0</span>
   </div>
 </div>
 
@@ -929,7 +964,7 @@
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
         <path d="M8 1v14M1 8h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
       </svg>
-      Add Show
+      <span id="addBtnLabel">Add Show</span>
     </button>
   </div>
 
@@ -938,7 +973,7 @@
       <span style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;min-width:36px">For</span>
       <div id="filterNames" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <div id="typeFilterRow" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <span style="font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;min-width:36px">Type</span>
       <button class="filter-btn" id="filterTypeAll" onclick="setTypeFilter('all')">All</button>
       <button class="filter-btn active" id="filterTypeTV" onclick="setTypeFilter('tv')">📺 TV</button>
@@ -962,10 +997,11 @@
         <div style="display:flex;gap:8px">
           <button type="button" class="type-btn active" id="typeTV" onclick="setType('tv')">📺 TV Show</button>
           <button type="button" class="type-btn" id="typeFilm" onclick="setType('film')">🎬 Film</button>
+          <button type="button" class="type-btn" id="typeBook" onclick="setType('book')">📚 Book</button>
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Programme / Film Name *</label>
+        <label class="form-label" id="nameFieldLabel">Programme / Film Name *</label>
         <input class="form-input" id="showName" placeholder="Start typing to search…" oninput="onNameInput()" autocomplete="off">
         <div class="ai-loading" id="aiLoading" style="display:none">
           <div class="spinner"></div>
@@ -983,7 +1019,7 @@
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Channel / Platform</label>
+          <label class="form-label" id="channelFieldLabel">Channel / Platform</label>
           <input class="form-input" id="showChannel" placeholder="e.g. BBC One, Netflix">
         </div>
       </div>
@@ -1011,11 +1047,11 @@
       <div id="filmFields" style="display:none">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Year</label>
+            <label class="form-label" id="yearFieldLabel">Year</label>
             <input class="form-input" id="showYear" type="number" min="1900" max="2099" placeholder="e.g. 2023">
           </div>
           <div class="form-group">
-            <label class="form-label">Runtime (mins)</label>
+            <label class="form-label" id="runtimeFieldLabel">Runtime (mins)</label>
             <input class="form-input" id="showRuntime" type="number" min="1" placeholder="e.g. 120">
           </div>
         </div>
@@ -1051,7 +1087,7 @@
 <div class="modal-overlay" id="shareModal">
   <div class="modal" style="max-width:420px">
     <div class="modal-header">
-      <div class="modal-title">Invite to TV</div>
+      <div class="modal-title">Invite to Entertainments</div>
       <button class="btn-close" onclick="closeShareModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -1099,10 +1135,17 @@
 <div class="modal-overlay" id="helpModal">
   <div class="modal" style="max-width:500px">
     <div class="modal-header">
-      <div class="modal-title">How to use TV</div>
+      <div class="modal-title">How to use Entertainments</div>
       <button class="btn-close" onclick="closeHelp()">✕</button>
     </div>
     <div class="modal-body" style="display:flex;flex-direction:column;gap:1.5rem">
+
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;color:var(--gold);margin-bottom:0.6rem">📺📚 Two Sections</div>
+        <div style="font-size:0.82rem;color:var(--muted);line-height:1.7">
+          Use the tabs at the top to switch between <strong style="color:var(--paper)">TV &amp; Film</strong> and <strong style="color:var(--paper)">Books</strong>. Each has its own Watching/Reading, Suggested, and Watched/Read lists.
+        </div>
+      </div>
 
       <div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;color:var(--gold);margin-bottom:0.6rem">📺 The Three Lists</div>
@@ -1128,7 +1171,8 @@
           Tap a show card to open the <strong style="color:var(--paper)">detail view</strong>. You'll see a grid of numbered buttons — one per episode, grouped by series.<br><br>
           <strong style="color:var(--paper)">Tap any episode button</strong> to mark it as watched — it turns gold. Tap again to unmark it.<br><br>
           Use <strong style="color:var(--paper)">Tick all</strong> next to a series heading to mark every episode in that series at once.<br><br>
-          The <strong style="color:var(--paper)">progress bar</strong> on each card shows how far through the whole show you are.
+          The <strong style="color:var(--paper)">progress bar</strong> on each card shows how far through the whole show you are.<br><br>
+          Books don't have episodes — just move a book between <strong style="color:var(--paper)">Reading</strong> and <strong style="color:var(--paper)">Read</strong> from its detail view.
         </div>
       </div>
 
@@ -1142,8 +1186,8 @@
       <div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.08em;color:var(--gold);margin-bottom:0.6rem">➕ Adding a Show</div>
         <div style="font-size:0.82rem;color:var(--muted);line-height:1.7">
-          Tap <strong style="color:var(--paper)">Add Show</strong> and start typing the title. Results from TVmaze (TV shows) or OMDB (films) will appear — tap one to auto-fill the details.<br><br>
-          Choose <strong style="color:var(--paper)">📺 TV Show</strong> or <strong style="color:var(--paper)">🎬 Film</strong> at the top of the form before searching.
+          Tap <strong style="color:var(--paper)">Add Show</strong> or <strong style="color:var(--paper)">Add Book</strong> and start typing the title. Results from TVmaze (TV shows), OMDB (films), or Google Books (books) will appear — tap one to auto-fill the details.<br><br>
+          Choose <strong style="color:var(--paper)">📺 TV Show</strong>, <strong style="color:var(--paper)">🎬 Film</strong> or <strong style="color:var(--paper)">📚 Book</strong> at the top of the form before searching.
         </div>
       </div>
 
@@ -1205,11 +1249,32 @@ const HEADERS = { 'Content-Type': 'application/json', 'apikey': SUPA_KEY, 'Autho
 
 const HOUSEHOLD_KEY = 'tv-app-household';
 let currentHousehold = '';
+let currentSection = 'media'; // 'media' (tv/film) or 'books'
 let currentTab = 'watching';
 let currentType = 'tv';
 let editingId = null;
 let nameTimeout = null;
 let localShows = [];
+
+// Labels that change depending on the active top-level section
+const SECTION_LABELS = {
+  media: {
+    heading: { watching: 'Currently Watching', suggested: 'Suggested Watch List', watched: 'All Watched' },
+    tab: { watching: { icon: '📺', text: 'Watching' }, watched: { icon: '✅', text: 'Watched' } },
+    addBtn: 'Add Show',
+    emptyIcon: '📺',
+  },
+  books: {
+    heading: { watching: 'Currently Reading', suggested: 'Suggested Reading List', watched: 'All Read' },
+    tab: { watching: { icon: '📖', text: 'Reading' }, watched: { icon: '✅', text: 'Read' } },
+    addBtn: 'Add Book',
+    emptyIcon: '📚',
+  }
+};
+
+function getTypeIcon(type) {
+  return type === 'film' ? '🎬' : type === 'book' ? '📚' : '📺';
+}
 
 // ── HOUSEHOLD ─────────────────────────────────────────────────────────────────
 function switchHousehold() {
@@ -1346,7 +1411,7 @@ async function openAdmin() {
         const showList = (items, colour) => items.length
           ? `<div style="margin-top:0.4rem">${items.map(s =>
               `<div style="font-size:0.75rem;color:${colour};padding:2px 0;border-bottom:1px solid var(--border)">
-                ${s.type === 'film' ? '🎬' : '📺'} ${s.name}
+                ${getTypeIcon(s.type)} ${s.name}
               </div>`).join('')}</div>`
           : '';
 
@@ -1424,7 +1489,7 @@ function getSuggestionUrl() { return document.getElementById('shareSuggestionLin
 
 function copySuggestionLink() {
   const show = currentSuggestionShow;
-  const text = `🎬 ${show.name}\n${getSuggestionUrl()}`;
+  const text = `${getTypeIcon(show.type)} ${show.name}\n${getSuggestionUrl()}`;
   navigator.clipboard.writeText(text).then(() => {
     showToast('Link copied! ✓'); closeShareSuggestion();
   }).catch(() => {
@@ -1439,15 +1504,17 @@ function shareSuggestionWhatsApp() {
   const show = currentSuggestionShow;
   const url = getSuggestionUrl();
 
-  const type = show.type === 'film' ? '🎬 Film' : '📺 TV Show';
-  const channel = show.channel ? `📡 ${show.channel}` : '';
+  const type = show.type === 'film' ? '🎬 Film' : show.type === 'book' ? '📚 Book' : '📺 TV Show';
+  const channel = show.channel ? (show.type === 'book' ? `✍️ ${show.channel}` : `📡 ${show.channel}`) : '';
   const seriesInfo = show.type === 'film'
     ? (show.runtime ? `⏱ ${show.runtime} mins` : '')
+    : show.type === 'book'
+    ? (show.runtime ? `📄 ${show.runtime} pages` : '')
     : `📂 ${show.series || 1} series · ${show.episodes || 1} episodes per series`;
   const desc = show.desc ? `\n\n${show.desc}` : '';
 
   const lines = [
-    `🎬 *${show.name}*`,
+    `${getTypeIcon(show.type)} *${show.name}*`,
     type,
     channel,
     seriesInfo,
@@ -1480,9 +1547,11 @@ function showIncomingSuggestion(show) {
   const content = document.getElementById('suggestionPreviewContent');
   const imgHtml = show.image
     ? `<img src="${show.image}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover">`
-    : `<div class="detail-hero-placeholder">${show.type === 'film' ? '🎬' : '📺'}</div>`;
+    : `<div class="detail-hero-placeholder">${getTypeIcon(show.type)}</div>`;
   const meta = show.type === 'film'
     ? `${show.year ? show.year + ' · ' : ''}${show.runtime ? show.runtime + ' mins' : ''}`
+    : show.type === 'book'
+    ? `${show.year ? show.year + ' · ' : ''}${show.runtime ? show.runtime + ' pages' : ''}`
     : `${show.series || 1} series · ${show.episodes || 1} ep/series`;
   const showJson = JSON.stringify(show).replace(/"/g, '&quot;');
   content.innerHTML = `
@@ -1524,6 +1593,11 @@ async function acceptSuggestion(showJson) {
   await dbSave(newShow);
   localShows.push(newShow);
   closeIncomingSuggestion();
+  const targetSection = newShow.type === 'book' ? 'books' : 'media';
+  if (targetSection !== currentSection) {
+    currentSection = targetSection;
+    applySectionUI(targetSection);
+  }
   currentTab = 'suggested';
   switchTab('suggested');
   showToast(`"${show.name}" added to your Suggested list! ✓`);
@@ -1564,20 +1638,20 @@ function copyShareLink() {
 }
 
 function shareWhatsApp() {
-  const msg = `Hey! I use this app to track TV shows and films. Create your own household and start tracking: ${getShareUrl()}`;
+  const msg = `Hey! I use this app to track TV shows, films and books. Create your own household and start tracking: ${getShareUrl()}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
 }
 
 function shareEmail() {
-  const subject = `Check out this TV & film tracker`;
-  const body = `Hi!\n\nI use this app to track TV shows and films with my household.\n\nOpen the link below, choose your own household name, and start tracking:\n\n${getShareUrl()}\n\nEnjoy!`;
+  const subject = `Check out this TV, film & book tracker`;
+  const body = `Hi!\n\nI use this app to track TV shows, films and books with my household.\n\nOpen the link below, choose your own household name, and start tracking:\n\n${getShareUrl()}\n\nEnjoy!`;
   window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 
 function shareNative() {
   navigator.share({
     title: 'TV — Track your shows & films',
-    text: 'Create your own household and start tracking TV shows and films!',
+    text: 'Create your own household and start tracking TV shows, films and books!',
     url: getShareUrl()
   });
 }
@@ -1605,8 +1679,11 @@ function updateFilterBar() {
   if (currentTab !== 'suggested') { filterBar.style.display = 'none'; return; }
   filterBar.style.display = 'flex';
 
+  const sectionShows = currentSection === 'books'
+    ? localShows.filter(s => s.type === 'book')
+    : localShows.filter(s => (s.type || 'tv') !== 'book');
   const names = [...new Set(
-    localShows.filter(s => s.list === 'suggested' && s.suggestedFor)
+    sectionShows.filter(s => s.list === 'suggested' && s.suggestedFor)
       .map(s => s.suggestedFor.trim()).filter(Boolean)
   )];
   const allNames = ['All', 'Both', ...names.filter(n => n !== 'Both' && n !== 'All')];
@@ -1633,25 +1710,51 @@ async function syncFromDB() {
 }
 
 // ── TABS ──────────────────────────────────────────────────────────────────────
-const headings = { watching: 'Currently Watching', suggested: 'Suggested Watch List', watched: 'All Watched' };
+function getHeadings() { return SECTION_LABELS[currentSection].heading; }
+
+// ── SECTIONS (TV & Film vs Books) ──────────────────────────────────────────────
+function applySectionUI(section) {
+  document.querySelectorAll('.section-tab').forEach(t => t.classList.toggle('active', t.dataset.section === section));
+  const labels = SECTION_LABELS[section];
+  document.getElementById('tabIcon-watching').textContent = labels.tab.watching.icon;
+  document.getElementById('tabLabel-watching').textContent = labels.tab.watching.text;
+  document.getElementById('tabIcon-watched').textContent = labels.tab.watched.icon;
+  document.getElementById('tabLabel-watched').textContent = labels.tab.watched.text;
+  document.getElementById('addBtnLabel').textContent = labels.addBtn;
+  document.getElementById('typeFilterRow').style.display = section === 'books' ? 'none' : 'flex';
+}
+
+function switchSection(section) {
+  currentSection = section;
+  applySectionUI(section);
+  currentTypeFilter = section === 'books' ? 'book' : 'tv';
+  switchTab('watching');
+}
 
 function switchTab(tab) {
   currentTab = tab;
   currentFilter = 'Both';
-  currentTypeFilter = 'tv';
+  if (currentSection === 'media') currentTypeFilter = 'tv';
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-  document.getElementById('sectionHeading').textContent = headings[tab];
+  document.getElementById('sectionHeading').textContent = getHeadings()[tab];
   document.getElementById('showList').value = tab;
-  ['All','TV','Film'].forEach(n => {
-    const el = document.getElementById('filterType' + n);
-    if (el) el.classList.toggle('active', n === 'TV');
-  });
+  if (currentSection === 'media') {
+    ['All','TV','Film'].forEach(n => {
+      const el = document.getElementById('filterType' + n);
+      if (el) el.classList.toggle('active', n === 'TV');
+    });
+  }
   render();
 }
 
 // ── RENDER ────────────────────────────────────────────────────────────────────
 function render() {
   let shows = loadShows().filter(s => s.list === currentTab);
+
+  // Restrict to the active top-level section (books vs tv/film)
+  shows = currentSection === 'books'
+    ? shows.filter(s => s.type === 'book')
+    : shows.filter(s => (s.type || 'tv') !== 'book');
 
   // Apply suggested-for person filter
   if (currentTab === 'suggested' && currentFilter !== 'all') {
@@ -1662,21 +1765,24 @@ function render() {
     });
   }
 
-  // Apply type filter
-  if (currentTypeFilter !== 'all') {
+  // Apply type filter (media section only — books has a single type)
+  if (currentSection === 'media' && currentTypeFilter !== 'all') {
     shows = shows.filter(s => (s.type || 'tv') === currentTypeFilter);
   }
 
   updateFilterBar();
 
   const grid = document.getElementById('showsGrid');
-  const all = loadShows();
+  const sectionShows = loadShows().filter(s =>
+    currentSection === 'books' ? s.type === 'book' : (s.type || 'tv') !== 'book'
+  );
   ['watching','suggested','watched'].forEach(t => {
-    document.getElementById('count-' + t).textContent = all.filter(s => s.list === t).length;
+    document.getElementById('count-' + t).textContent = sectionShows.filter(s => s.list === t).length;
   });
 
   if (!shows.length) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📺</div><div class="empty-title">${headings[currentTab]}</div><div class="empty-sub">Nothing here yet — add a show to get started.</div></div>`;
+    const noun = currentSection === 'books' ? 'book' : 'show';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">${SECTION_LABELS[currentSection].emptyIcon}</div><div class="empty-title">${getHeadings()[currentTab]}</div><div class="empty-sub">Nothing here yet — add a ${noun} to get started.</div></div>`;
     return;
   }
 
@@ -1685,25 +1791,33 @@ function render() {
 
 function showCard(show) {
   const isFilm = show.type === 'film';
-  const totalEps = isFilm ? 1 : (show.series || 1) * (show.episodes || 1);
+  const isBook = show.type === 'book';
+  const totalEps = (isFilm || isBook) ? 1 : (show.series || 1) * (show.episodes || 1);
   const watchedEps = (show.watchedEps || []).length;
   const pct = totalEps > 0 ? Math.round((watchedEps / totalEps) * 100) : 0;
+  const icon = getTypeIcon(show.type);
 
   const stars = [1,2,3,4,5].map(n =>
     `<span class="star ${(show.rating||0) >= n ? 'filled' : ''}" onclick="rateShow('${show.id}', ${n}, event)">★</span>`
   ).join('');
 
   const imgHtml = show.image
-    ? `<img class="show-image" src="${show.image}" onerror="this.parentNode.innerHTML='<div class=\\'show-image-placeholder\\'>${isFilm ? '🎬' : '📺'}</div>'" alt="${show.name}">`
-    : `<div class="show-image-placeholder">${isFilm ? '🎬' : '📺'}</div>`;
+    ? `<img class="show-image" src="${show.image}" onerror="this.parentNode.innerHTML='<div class=\\'show-image-placeholder\\'>${icon}</div>'" alt="${show.name}">`
+    : `<div class="show-image-placeholder">${icon}</div>`;
 
   const schedule = show.date || show.time
     ? `<div class="schedule-badge">📅 ${show.date ? fmtDate(show.date) : ''} ${show.time ? fmtTime(show.time) : ''}</div>`
     : '';
 
-  const typeBadge = isFilm ? `<span class="type-badge film">🎬 Film</span>` : `<span class="type-badge">📺 TV</span>`;
+  const typeBadge = isFilm ? `<span class="type-badge film">🎬 Film</span>`
+    : isBook ? `<span class="type-badge book">📚 Book</span>`
+    : `<span class="type-badge">📺 TV</span>`;
 
-  const statsHtml = isFilm
+  const statsHtml = isBook
+    ? `<div class="stat"><span class="stat-icon">📄</span>${show.runtime ? show.runtime + ' pages' : '?'}</div>
+       <div class="stat"><span class="stat-icon">📅</span>${show.year || '?'}</div>
+       <div class="stat"><span class="stat-icon">${show.list === 'watched' ? '✅' : '📖'}</span>${show.list === 'watched' ? 'Read' : 'Reading'}</div>`
+    : isFilm
     ? `<div class="stat"><span class="stat-icon">⏱</span>${show.runtime || '?'} mins</div>
        <div class="stat"><span class="stat-icon">📅</span>${show.year || '?'}</div>
        <div class="stat"><span class="stat-icon">${watchedEps ? '✅' : '⭕'}</span>${watchedEps ? 'Watched' : 'Unwatched'}</div>`
@@ -1711,19 +1825,17 @@ function showCard(show) {
        <div class="stat"><span class="stat-icon">🎞</span>${show.episodes||1} ep/series</div>
        <div class="stat"><span class="stat-icon">✅</span>${watchedEps}/${totalEps} watched</div>`;
 
-  const progressHtml = isFilm ? '' : `
+  const progressHtml = (isFilm || isBook) ? '' : `
       <div class="progress-section">
         <div class="progress-label"><span>Progress</span><span>${pct}%</span></div>
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>`;
 
-  const detailBtn = isFilm
-    ? `<button class="btn-sm" onclick="openDetail('${show.id}')">ℹ️ Details</button>`
-    : `<button class="btn-sm" onclick="openDetail('${show.id}')">📋 Episodes</button>`;
-
   const suggestedForBadge = (show.list === 'suggested' && show.suggestedFor)
     ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(138,100,180,0.12);border:1px solid rgba(138,100,180,0.3);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:#c0a0e8;font-family:'DM Mono',monospace;margin-top:0.5rem">👤 ${show.suggestedFor}</div>`
     : '';
+
+  const actionsLabel = isBook ? '📖 Details & Options' : isFilm ? 'ℹ️ Details & Options' : '📋 Episodes & Options';
 
   return `
   <div class="show-card" onclick="openDetail('${show.id}')">
@@ -1741,7 +1853,7 @@ function showCard(show) {
       ${progressHtml}
     </div>
     <div class="card-actions" onclick="event.stopPropagation()">
-      <button class="btn-sm" onclick="openDetail('${show.id}')">📋 ${isFilm ? 'Details & Options' : 'Episodes & Options'}</button>
+      <button class="btn-sm" onclick="openDetail('${show.id}')">${actionsLabel}</button>
     </div>
   </div>`;
 }
@@ -1752,29 +1864,36 @@ function openDetail(id) {
   const show = shows.find(s => s.id === id);
   if (!show) return;
 
+  const isBook = show.type === 'book';
   const content = document.getElementById('detailContent');
   const numSeries = parseInt(show.series) || 1;
   const numEps = parseInt(show.episodes) || 1;
 
   const imgHtml = show.image
     ? `<img src="${show.image}" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover">`
-    : `<div class="detail-hero-placeholder">🎬</div>`;
+    : `<div class="detail-hero-placeholder">${getTypeIcon(show.type)}</div>`;
 
-  let seriesHTML = '';
-  for (let s = 1; s <= numSeries; s++) {
-    const epBtns = Array.from({length: numEps}, (_, i) => {
-      const epKey = `s${s}e${i+1}`;
-      const watched = (show.watchedEps||[]).includes(epKey);
-      return `<button class="ep-btn ${watched ? 'watched' : ''}" onclick="toggleEp('${id}','${epKey}',this)" title="S${s}E${i+1}">${i+1}</button>`;
-    }).join('');
-    seriesHTML += `
-      <div class="series-section">
-        <div class="series-header">
-          <div class="series-title">Series ${s}</div>
-          <button class="btn-tick-all" onclick="tickAllSeries('${id}',${s},${numEps})">Tick all</button>
-        </div>
-        <div class="episodes-grid">${epBtns}</div>
-      </div>`;
+  let trackerHTML = '';
+  if (!isBook) {
+    let seriesHTML = '';
+    for (let s = 1; s <= numSeries; s++) {
+      const epBtns = Array.from({length: numEps}, (_, i) => {
+        const epKey = `s${s}e${i+1}`;
+        const watched = (show.watchedEps||[]).includes(epKey);
+        return `<button class="ep-btn ${watched ? 'watched' : ''}" onclick="toggleEp('${id}','${epKey}',this)" title="S${s}E${i+1}">${i+1}</button>`;
+      }).join('');
+      seriesHTML += `
+        <div class="series-section">
+          <div class="series-header">
+            <div class="series-title">Series ${s}</div>
+            <button class="btn-tick-all" onclick="tickAllSeries('${id}',${s},${numEps})">Tick all</button>
+          </div>
+          <div class="episodes-grid">${epBtns}</div>
+        </div>`;
+    }
+    trackerHTML = `
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.1em;color:var(--gold);margin-bottom:1rem">Episode Tracker</div>
+      ${seriesHTML}`;
   }
 
   const stars = [1,2,3,4,5].map(n =>
@@ -1784,6 +1903,9 @@ function openDetail(id) {
   const schedule = show.date || show.time
     ? `<div class="schedule-badge" style="margin-bottom:1rem">📅 ${show.date ? fmtDate(show.date) : ''} ${show.time ? fmtTime(show.time) : ''}</div>`
     : '';
+
+  const watchedLabel = isBook ? '✅ Mark as Read' : '✅ Mark as Watched';
+  const watchingLabel = isBook ? `${getTypeIcon('book')} Move to Reading` : `${getTypeIcon(show.type)} Move to Watching`;
 
   content.innerHTML = `
     <div class="modal-header">
@@ -1798,11 +1920,10 @@ function openDetail(id) {
       </div>
       ${schedule}
       <p style="font-size:0.9rem;line-height:1.7;color:var(--muted);margin-bottom:1.5rem">${show.desc||'No description.'}</p>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.1em;color:var(--gold);margin-bottom:1rem">Episode Tracker</div>
-      ${seriesHTML}
+      ${trackerHTML}
       <div style="display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap">
-        ${show.list !== 'watched' ? `<button class="btn-sm success" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watched')">✅ Mark as Watched</button>` : ''}
-        ${show.list !== 'watching' ? `<button class="btn-sm" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watching')">📺 Move to Watching</button>` : ''}
+        ${show.list !== 'watched' ? `<button class="btn-sm success" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watched')">${watchedLabel}</button>` : ''}
+        ${show.list !== 'watching' ? `<button class="btn-sm" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watching')">${watchingLabel}</button>` : ''}
         ${show.list !== 'suggested' ? `<button class="btn-sm" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','suggested')">✨ Move to Suggested</button>` : ''}
       </div>
       <div style="display:flex;gap:8px;margin-top:0.75rem;flex-wrap:wrap">
@@ -1865,13 +1986,13 @@ async function moveShow(id, list) {
   show.list = list;
   await dbSave(show);
   closeDetail();
-  showToast(`Moved to ${headings[list]}`);
+  showToast(`Moved to ${getHeadings()[list]}`);
 }
 
 // ── ADD / EDIT ────────────────────────────────────────────────────────────────
 function openAddModal() {
   editingId = null;
-  document.getElementById('modalTitle').textContent = 'Add Show';
+  document.getElementById('modalTitle').textContent = currentSection === 'books' ? 'Add Book' : 'Add Show';
   document.getElementById('showName').value = '';
   document.getElementById('showDesc').value = '';
   document.getElementById('showChannel').value = '';
@@ -1888,7 +2009,7 @@ function openAddModal() {
   populateSFSuggestions();
   document.getElementById('aiLoading').style.display = 'none';
   document.getElementById('searchResults').style.display = 'none';
-  setType('tv', false);
+  setType(currentSection === 'books' ? 'book' : 'tv', false);
   document.getElementById('addModal').classList.add('open');
   document.getElementById('showName').focus();
 }
@@ -1902,7 +2023,7 @@ function editShow(id) {
   const show = loadShows().find(s => s.id === id);
   if (!show) return;
   editingId = id;
-  document.getElementById('modalTitle').textContent = 'Edit Show';
+  document.getElementById('modalTitle').textContent = show.type === 'book' ? 'Edit Book' : 'Edit Show';
   document.getElementById('showName').value = show.name || '';
   document.getElementById('showDesc').value = show.desc || '';
   document.getElementById('showChannel').value = show.channel || '';
@@ -1988,9 +2109,14 @@ async function saveShow() {
   btn.disabled = false;
   btn.textContent = 'Save Show';
   closeAddModal();
+  const targetSection = show.type === 'book' ? 'books' : 'media';
+  if (targetSection !== currentSection) {
+    currentSection = targetSection;
+    applySectionUI(targetSection);
+  }
   currentTab = show.list;
   switchTab(show.list);
-  showToast(editingId ? 'Show updated!' : 'Show added!');
+  showToast(editingId ? (show.type === 'book' ? 'Book updated!' : 'Show updated!') : (show.type === 'book' ? 'Book added!' : 'Show added!'));
 
   if (!show.desc && !editingId) fetchShowDetails(show.id, show.name);
 }
@@ -2034,11 +2160,22 @@ function setType(type, clearName = true) {
   currentType = type;
   document.getElementById('typeTV').classList.toggle('active', type === 'tv');
   document.getElementById('typeFilm').classList.toggle('active', type === 'film');
+  document.getElementById('typeBook').classList.toggle('active', type === 'book');
   document.getElementById('tvFields').style.display = type === 'tv' ? '' : 'none';
-  document.getElementById('filmFields').style.display = type === 'film' ? '' : 'none';
+  document.getElementById('filmFields').style.display = (type === 'film' || type === 'book') ? '' : 'none';
   document.getElementById('searchResults').style.display = 'none';
   if (clearName) document.getElementById('showName').value = '';
-  document.getElementById('aiLoadingText').textContent = type === 'tv' ? 'Searching TVmaze…' : 'Searching OMDB…';
+
+  const loadingText = { tv: 'Searching TVmaze…', film: 'Searching OMDB…', book: 'Searching Google Books…' };
+  document.getElementById('aiLoadingText').textContent = loadingText[type];
+
+  document.getElementById('nameFieldLabel').textContent =
+    type === 'tv' ? 'Programme Name *' : type === 'film' ? 'Film Name *' : 'Book Name *';
+  document.getElementById('channelFieldLabel').textContent = type === 'book' ? 'Author' : 'Channel / Platform';
+  document.getElementById('showChannel').placeholder = type === 'book' ? 'e.g. Jane Austen' : 'e.g. BBC One, Netflix';
+  document.getElementById('yearFieldLabel').textContent = type === 'book' ? 'Published Year' : 'Year';
+  document.getElementById('runtimeFieldLabel').textContent = type === 'book' ? 'Pages' : 'Runtime (mins)';
+  document.getElementById('showRuntime').placeholder = type === 'book' ? 'e.g. 320' : 'e.g. 120';
 }
 
 // ── SEARCH DROPDOWN ───────────────────────────────────────────────────────────
@@ -2056,14 +2193,34 @@ async function searchLookup(name) {
   try {
     if (currentType === 'tv') {
       await searchTVMaze(name);
-    } else {
+    } else if (currentType === 'film') {
       await searchOMDB(name);
+    } else {
+      await searchGoogleBooks(name);
     }
   } catch(e) {
     console.warn('Search failed:', e);
   } finally {
     loadEl.style.display = 'none';
   }
+}
+
+async function searchGoogleBooks(name) {
+  const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(name)}&maxResults=6`);
+  const data = await res.json();
+  if (!data.items || !data.items.length) return;
+  showSearchDropdown(data.items.map(item => {
+    const info = item.volumeInfo || {};
+    const authors = (info.authors || []).join(', ');
+    const year = info.publishedDate ? info.publishedDate.slice(0,4) : '?';
+    return {
+      title: info.title || 'Untitled',
+      subtitle: `${authors || 'Unknown author'} · ${year}`,
+      image: info.imageLinks?.thumbnail ? info.imageLinks.thumbnail.replace('http://', 'https://') : '',
+      data: info,
+      source: 'googlebooks'
+    };
+  }));
 }
 
 async function searchTVMaze(name) {
@@ -2116,12 +2273,22 @@ async function selectSearchResult(idx) {
   try {
     if (item.source === 'tvmaze') {
       await fillFromTVMaze(item.data);
-    } else {
+    } else if (item.source === 'omdb') {
       await fillFromOMDB(item.data);
+    } else {
+      fillFromGoogleBooks(item.data);
     }
   } finally {
     document.getElementById('aiLoading').style.display = 'none';
   }
+}
+
+function fillFromGoogleBooks(info) {
+  if (info.description) document.getElementById('showDesc').value = info.description.replace(/<[^>]+>/g, '');
+  document.getElementById('showChannel').value = (info.authors || []).join(', ');
+  if (info.imageLinks?.thumbnail) document.getElementById('showImage').value = info.imageLinks.thumbnail.replace('http://', 'https://');
+  if (info.publishedDate) document.getElementById('showYear').value = info.publishedDate.slice(0,4);
+  if (info.pageCount) document.getElementById('showRuntime').value = info.pageCount;
 }
 
 async function fillFromTVMaze(show) {
@@ -2157,7 +2324,7 @@ async function fetchShowDetails(id, name) {
   // Used after save if no desc — TV only
   try {
     const show = localShows.find(s => s.id === id);
-    if (!show || show.type === 'film') return;
+    if (!show || show.type === 'film' || show.type === 'book') return;
     const res = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(name)}&embed=episodes`);
     if (!res.ok) return;
     const data = await res.json();
