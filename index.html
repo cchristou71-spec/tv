@@ -2287,19 +2287,68 @@ async function selectSearchResult(idx) {
     } else if (item.source === 'omdb') {
       await fillFromOMDB(item.data);
     } else {
-      fillFromGoogleBooks(item.data);
+      await fillFromGoogleBooks(item.data);
     }
   } finally {
     document.getElementById('aiLoading').style.display = 'none';
   }
 }
 
-function fillFromGoogleBooks(info) {
+async function fillFromGoogleBooks(info) {
   if (info.description) document.getElementById('showDesc').value = info.description.replace(/<[^>]+>/g, '');
   document.getElementById('showChannel').value = (info.authors || []).join(', ');
   if (info.imageLinks?.thumbnail) document.getElementById('showImage').value = info.imageLinks.thumbnail.replace('http://', 'https://');
   if (info.publishedDate) document.getElementById('showYear').value = info.publishedDate.slice(0,4);
   if (info.pageCount) document.getElementById('showRuntime').value = info.pageCount;
+
+  // Google Books sometimes has thin records (e.g. very new releases) —
+  // fall back to Open Library to fill in whatever gaps are left.
+  const stillMissing = !document.getElementById('showDesc').value
+    || !document.getElementById('showImage').value
+    || !document.getElementById('showYear').value
+    || !document.getElementById('showRuntime').value;
+  if (stillMissing) {
+    await fillFromOpenLibrary(info.title || document.getElementById('showName').value, (info.authors || [])[0] || '');
+  }
+}
+
+async function fillFromOpenLibrary(title, author) {
+  try {
+    const q = encodeURIComponent(`${title} ${author}`.trim());
+    const res = await fetch(`https://openlibrary.org/search.json?q=${q}&limit=1&fields=key,cover_i,first_publish_year,number_of_pages_median,first_sentence`);
+    const data = await res.json();
+    const doc = data.docs && data.docs[0];
+    if (!doc) return;
+
+    if (!document.getElementById('showImage').value && doc.cover_i) {
+      document.getElementById('showImage').value = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
+    }
+    if (!document.getElementById('showYear').value && doc.first_publish_year) {
+      document.getElementById('showYear').value = doc.first_publish_year;
+    }
+    if (!document.getElementById('showRuntime').value && doc.number_of_pages_median) {
+      document.getElementById('showRuntime').value = doc.number_of_pages_median;
+    }
+    if (!document.getElementById('showDesc').value) {
+      let filledDesc = false;
+      if (doc.key) {
+        try {
+          const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
+          const work = await workRes.json();
+          const desc = typeof work.description === 'string' ? work.description : work.description?.value;
+          if (desc) {
+            document.getElementById('showDesc').value = desc.replace(/<[^>]+>/g, '');
+            filledDesc = true;
+          }
+        } catch(e) { /* work lookup is best-effort */ }
+      }
+      if (!filledDesc && doc.first_sentence?.[0]) {
+        document.getElementById('showDesc').value = doc.first_sentence[0];
+      }
+    }
+  } catch(e) {
+    console.warn('Open Library fallback failed:', e);
+  }
 }
 
 async function fillFromTVMaze(show) {
