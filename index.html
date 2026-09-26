@@ -1024,9 +1024,9 @@
         <div class="form-group">
           <label class="form-label">List</label>
           <select class="form-select" id="showList" onchange="onListChange()">
-            <option value="watching">Currently Watching</option>
+            <option value="watching" id="listOptWatching">Currently Watching</option>
             <option value="suggested">Suggested</option>
-            <option value="watched">Watched</option>
+            <option value="watched" id="listOptWatched">Watched</option>
           </select>
         </div>
         <div class="form-group">
@@ -1042,6 +1042,11 @@
         <label class="form-label">Suggested For</label>
         <input class="form-input" id="showSuggestedFor" placeholder="e.g. Both, Carolyn, Cos…" value="Both">
         <div id="sfSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Recommended By</label>
+        <input class="form-input" id="showRecommendedBy" placeholder="e.g. Carolyn, a friend, a review…">
+        <div id="rbSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
       <div id="tvFields">
         <div class="form-row">
@@ -1338,6 +1343,7 @@ async function dbLoad() {
       year: r.year,
       runtime: r.runtime,
       suggestedFor: r.suggested_for || '',
+      recommendedBy: r.recommended_by || '',
     }));
     render();
   } catch(e) {
@@ -1366,6 +1372,7 @@ async function dbSave(show) {
     runtime: show.runtime || null,
     household_id: currentHousehold,
     suggested_for: show.suggestedFor || null,
+    recommended_by: show.recommendedBy || null,
   };
   await fetch(`${SUPA_URL}/rest/v1/tv_shows`, {
     method: 'POST',
@@ -1846,6 +1853,10 @@ function showCard(show) {
     ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(138,100,180,0.12);border:1px solid rgba(138,100,180,0.3);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:#c0a0e8;font-family:'DM Mono',monospace;margin-top:0.5rem">👤 ${show.suggestedFor}</div>`
     : '';
 
+  const recommendedByBadge = show.recommendedBy
+    ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(232,197,71,0.08);border:1px solid rgba(232,197,71,0.25);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:var(--gold);font-family:'DM Mono',monospace;margin-top:0.5rem;margin-left:6px">💬 Rec. by ${show.recommendedBy}</div>`
+    : '';
+
   const actionsLabel = isBook ? '📖 Details & Options' : isFilm ? 'ℹ️ Details & Options' : '📋 Episodes & Options';
 
   return `
@@ -1859,6 +1870,7 @@ function showCard(show) {
       <div class="show-title">${show.name}</div>
       <div class="show-desc">${show.desc || 'No description.'}</div>
       ${suggestedForBadge}
+      ${recommendedByBadge}
       ${schedule}
       <div class="show-stats">${statsHtml}</div>
       ${progressHtml}
@@ -1930,6 +1942,7 @@ function openDetail(id) {
         <div>${stars}</div>
       </div>
       ${schedule}
+      ${show.recommendedBy ? `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.75rem">💬 Recommended by <span style="color:var(--gold)">${show.recommendedBy}</span></div>` : ''}
       <p style="font-size:0.9rem;line-height:1.7;color:var(--muted);margin-bottom:1.5rem">${show.desc||'No description.'}</p>
       ${trackerHTML}
       <div style="display:flex;gap:8px;margin-top:1.5rem;flex-wrap:wrap">
@@ -1939,12 +1952,18 @@ function openDetail(id) {
       </div>
       <div style="display:flex;gap:8px;margin-top:0.75rem;flex-wrap:wrap">
         <button class="btn-sm" style="flex:none;padding:8px 16px" onclick="closeDetail();editShow('${id}')">✏️ Edit</button>
+        ${isBook ? `<a class="btn-sm" style="flex:none;padding:8px 16px;border-color:#e8a13f;color:#f0b95a;text-decoration:none;display:inline-flex;align-items:center;gap:6px" href="${amazonKindleUrl(show.name, show.channel)}" target="_blank" rel="noopener">🛒 Find on Kindle</a>` : ''}
         <button class="btn-sm" style="flex:none;padding:8px 16px;border-color:#7a6fa0;color:#c0a0e8" onclick="shareSuggestion('${id}')">📤 Share Suggestion</button>
         <button class="btn-sm danger" style="flex:none;padding:8px 16px" onclick="closeDetail();deleteShow('${id}')">🗑 Remove</button>
       </div>
     </div>`;
 
   document.getElementById('detailModal').classList.add('open');
+}
+
+function amazonKindleUrl(title, author) {
+  const q = [title, author].filter(Boolean).join(' ');
+  return `https://www.amazon.co.uk/s?k=${encodeURIComponent(q)}&i=digital-text`;
 }
 
 function closeDetail() {
@@ -2015,6 +2034,8 @@ function openAddModal() {
   document.getElementById('showYear').value = '';
   document.getElementById('showRuntime').value = '';
   document.getElementById('showSuggestedFor').value = 'Both';
+  document.getElementById('showRecommendedBy').value = '';
+  populateRBSuggestions();
   document.getElementById('showList').value = currentTab;
   document.getElementById('suggestedForGroup').style.display = currentTab === 'suggested' ? '' : 'none';
   populateSFSuggestions();
@@ -2049,6 +2070,8 @@ function editShow(id) {
   document.getElementById('showSuggestedFor').value = sf;
   populateSFSuggestions();
   setSuggestedFor(sf);
+  document.getElementById('showRecommendedBy').value = show.recommendedBy || '';
+  populateRBSuggestions();
   document.getElementById('showList').value = show.list || currentTab;
   document.getElementById('suggestedForGroup').style.display = (show.list === 'suggested') ? '' : 'none';
   document.getElementById('aiLoading').style.display = 'none';
@@ -2079,7 +2102,9 @@ async function saveShow() {
       s.list === list
     );
     if (duplicate) {
-      const confirm = window.confirm(`"${name}" is already in your ${list === 'suggested' ? 'Suggested' : list === 'watching' ? 'Watching' : 'Watched'} list.\n\nAre you sure you want to add it again?`);
+      const isBookType = currentType === 'book';
+      const listName = list === 'suggested' ? 'Suggested' : list === 'watching' ? (isBookType ? 'Reading' : 'Watching') : (isBookType ? 'Read' : 'Watched');
+      const confirm = window.confirm(`"${name}" is already in your ${listName} list.\n\nAre you sure you want to add it again?`);
       if (!confirm) { return; }
     }
   }
@@ -2101,6 +2126,7 @@ async function saveShow() {
     image: document.getElementById('showImage').value.trim(),
     list,
     suggestedFor: document.getElementById('showSuggestedFor').value.trim(),
+    recommendedBy: document.getElementById('showRecommendedBy').value.trim(),
     type: currentType,
     year: document.getElementById('showYear').value || null,
     runtime: document.getElementById('showRuntime').value || null,
@@ -2118,7 +2144,7 @@ async function saveShow() {
   }
 
   btn.disabled = false;
-  btn.textContent = 'Save Show';
+  btn.textContent = show.type === 'book' ? 'Save Book' : 'Save Show';
   closeAddModal();
   const targetSection = show.type === 'book' ? 'books' : 'media';
   if (targetSection !== currentSection) {
@@ -2158,6 +2184,24 @@ function populateSFSuggestions() {
   ).join('');
 }
 
+function setRecommendedBy(val) {
+  document.getElementById('showRecommendedBy').value = val;
+  document.querySelectorAll('.rb-quick-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.val === val));
+}
+
+function populateRBSuggestions() {
+  const options = [...new Set(
+    localShows.filter(s => s.recommendedBy).map(s => s.recommendedBy.trim())
+  )];
+  const el = document.getElementById('rbSuggestions');
+  if (!el) return;
+  el.innerHTML = options.map(n =>
+    `<button type="button" class="filter-btn rb-quick-btn ${document.getElementById('showRecommendedBy')?.value === n ? 'active' : ''}"
+      data-val="${n}" onclick="setRecommendedBy('${n}')">${n}</button>`
+  ).join('');
+}
+
 
 function onListChange() {
   const list = document.getElementById('showList').value;
@@ -2187,6 +2231,10 @@ function setType(type, clearName = true) {
   document.getElementById('yearFieldLabel').textContent = type === 'book' ? 'Published Year' : 'Year';
   document.getElementById('runtimeFieldLabel').textContent = type === 'book' ? 'Pages' : 'Runtime (mins)';
   document.getElementById('showRuntime').placeholder = type === 'book' ? 'e.g. 320' : 'e.g. 120';
+
+  document.getElementById('listOptWatching').textContent = type === 'book' ? 'Currently Reading' : 'Currently Watching';
+  document.getElementById('listOptWatched').textContent = type === 'book' ? 'Read' : 'Watched';
+  document.getElementById('saveBtn').textContent = type === 'book' ? 'Save Book' : 'Save Show';
 }
 
 // ── SEARCH DROPDOWN ───────────────────────────────────────────────────────────
@@ -2202,25 +2250,39 @@ async function searchLookup(name) {
   const loadEl = document.getElementById('aiLoading');
   loadEl.style.display = 'flex';
   try {
+    let items = [];
     if (currentType === 'tv') {
-      await searchTVMaze(name);
+      items = await searchTVMaze(name);
     } else if (currentType === 'film') {
-      await searchOMDB(name);
+      items = await searchOMDB(name);
     } else {
-      await searchGoogleBooks(name);
+      items = await searchGoogleBooks(name);
+    }
+    if (items && items.length) {
+      showSearchDropdown(items);
+    } else {
+      showNoResults();
     }
   } catch(e) {
     console.warn('Search failed:', e);
+    showNoResults();
   } finally {
     loadEl.style.display = 'none';
   }
 }
 
+function showNoResults() {
+  const el = document.getElementById('searchResults');
+  el.style.display = 'block';
+  el.innerHTML = `<div style="padding:16px 14px;text-align:center;font-size:0.8rem;color:var(--muted);line-height:1.5">No matches found.<br>You can still fill in the details below yourself.</div>`;
+  el._items = [];
+}
+
 async function searchGoogleBooks(name) {
   const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(name)}&maxResults=6`);
   const data = await res.json();
-  if (!data.items || !data.items.length) return;
-  showSearchDropdown(data.items.map(item => {
+  if (!data.items || !data.items.length) return [];
+  return data.items.map(item => {
     const info = item.volumeInfo || {};
     const authors = (info.authors || []).join(', ');
     const year = info.publishedDate ? info.publishedDate.slice(0,4) : '?';
@@ -2231,33 +2293,33 @@ async function searchGoogleBooks(name) {
       data: info,
       source: 'googlebooks'
     };
-  }));
+  });
 }
 
 async function searchTVMaze(name) {
   const res = await fetch(`https://api.tvmaze.com/search/shows?q=${encodeURIComponent(name)}`);
   const results = await res.json();
-  if (!results.length) return;
-  showSearchDropdown(results.slice(0, 6).map(r => ({
+  if (!results.length) return [];
+  return results.slice(0, 6).map(r => ({
     title: r.show.name,
     subtitle: `${r.show.network?.name || r.show.webChannel?.name || 'Unknown'} · ${r.show.premiered?.slice(0,4) || '?'}`,
     image: r.show.image?.medium || '',
     data: r.show,
     source: 'tvmaze'
-  })));
+  }));
 }
 
 async function searchOMDB(name) {
   const res = await fetch(`https://www.omdbapi.com/?s=${encodeURIComponent(name)}&type=movie&apikey=65f91182`);
   const data = await res.json();
-  if (data.Response === 'False' || !data.Search) return;
-  showSearchDropdown(data.Search.slice(0, 6).map(r => ({
+  if (data.Response === 'False' || !data.Search) return [];
+  return data.Search.slice(0, 6).map(r => ({
     title: r.Title,
     subtitle: `Film · ${r.Year}`,
     image: r.Poster !== 'N/A' ? r.Poster : '',
     data: r,
     source: 'omdb'
-  })));
+  }));
 }
 
 function showSearchDropdown(items) {
@@ -2309,6 +2371,12 @@ async function fillFromGoogleBooks(info) {
     || !document.getElementById('showRuntime').value;
   if (stillMissing) {
     await fillFromOpenLibrary(info.title || document.getElementById('showName').value, (info.authors || [])[0] || '');
+  }
+
+  // Let the user know when neither source could fill in the description/cover,
+  // so a blank field reads as "nothing found yet" rather than looking broken.
+  if (!document.getElementById('showDesc').value || !document.getElementById('showImage').value) {
+    showToast('No extra details found for this book yet — feel free to fill them in yourself.');
   }
 }
 
