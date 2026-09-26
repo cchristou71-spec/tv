@@ -2256,7 +2256,10 @@ async function searchLookup(name) {
     } else if (currentType === 'film') {
       items = await searchOMDB(name);
     } else {
-      items = await searchGoogleBooks(name);
+      items = await searchOpenLibrary(name);
+      if (!items.length) {
+        items = await searchGoogleBooks(name);
+      }
     }
     if (items && items.length) {
       showSearchDropdown(items);
@@ -2348,12 +2351,81 @@ async function selectSearchResult(idx) {
       await fillFromTVMaze(item.data);
     } else if (item.source === 'omdb') {
       await fillFromOMDB(item.data);
+    } else if (item.source === 'openlibrary') {
+      await fillFieldsFromOLDoc(item.data, true);
+      if (!document.getElementById('showDesc').value || !document.getElementById('showImage').value) {
+        await fillGapsFromGoogleBooks(item.title, (item.data.author_name || [])[0] || '');
+        if (!document.getElementById('showDesc').value || !document.getElementById('showImage').value) {
+          showToast('No extra details found for this book yet — feel free to fill them in yourself.');
+        }
+      }
     } else {
       await fillFromGoogleBooks(item.data);
     }
   } finally {
     document.getElementById('aiLoading').style.display = 'none';
   }
+}
+
+async function fillGapsFromGoogleBooks(title, author) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(`${title} ${author}`.trim())}&maxResults=1`);
+    const data = await res.json();
+    const info = data.items && data.items[0] && data.items[0].volumeInfo;
+    if (!info) return;
+    if (!document.getElementById('showDesc').value && info.description) {
+      document.getElementById('showDesc').value = info.description.replace(/<[^>]+>/g, '');
+    }
+    if (!document.getElementById('showImage').value && info.imageLinks?.thumbnail) {
+      document.getElementById('showImage').value = info.imageLinks.thumbnail.replace('http://', 'https://');
+    }
+    if (!document.getElementById('showYear').value && info.publishedDate) {
+      document.getElementById('showYear').value = info.publishedDate.slice(0,4);
+    }
+    if (!document.getElementById('showRuntime').value && info.pageCount) {
+      document.getElementById('showRuntime').value = info.pageCount;
+    }
+  } catch(e) {
+    console.warn('Google Books gap-fill failed:', e);
+  }
+}
+
+async function fillFieldsFromOLDoc(doc, overwrite) {
+  const set = (id, val) => {
+    if (val === undefined || val === null || val === '') return;
+    const el = document.getElementById(id);
+    if (overwrite || !el.value) el.value = val;
+  };
+  set('showChannel', (doc.author_name || []).join(', '));
+  if (doc.cover_i) set('showImage', `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`);
+  set('showYear', doc.first_publish_year);
+  set('showRuntime', doc.number_of_pages_median);
+
+  if (overwrite || !document.getElementById('showDesc').value) {
+    let desc = '';
+    if (doc.key) {
+      try {
+        const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
+        const work = await workRes.json();
+        desc = typeof work.description === 'string' ? work.description : work.description?.value;
+      } catch(e) { /* work lookup is best-effort */ }
+    }
+    if (!desc && doc.first_sentence?.[0]) desc = doc.first_sentence[0];
+    if (desc) document.getElementById('showDesc').value = desc.replace(/<[^>]+>/g, '');
+  }
+}
+
+async function searchOpenLibrary(name) {
+  const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(name)}&limit=6&fields=key,title,author_name,cover_i,first_publish_year,number_of_pages_median,first_sentence`);
+  const data = await res.json();
+  if (!data.docs || !data.docs.length) return [];
+  return data.docs.map(doc => ({
+    title: doc.title,
+    subtitle: `${(doc.author_name || []).join(', ') || 'Unknown author'} · ${doc.first_publish_year || '?'}`,
+    image: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+    data: doc,
+    source: 'openlibrary'
+  }));
 }
 
 async function fillFromGoogleBooks(info) {
@@ -2370,52 +2442,18 @@ async function fillFromGoogleBooks(info) {
     || !document.getElementById('showYear').value
     || !document.getElementById('showRuntime').value;
   if (stillMissing) {
-    await fillFromOpenLibrary(info.title || document.getElementById('showName').value, (info.authors || [])[0] || '');
+    try {
+      const items = await searchOpenLibrary(`${info.title || document.getElementById('showName').value} ${(info.authors || [])[0] || ''}`.trim());
+      if (items.length) await fillFieldsFromOLDoc(items[0].data, false);
+    } catch(e) {
+      console.warn('Open Library fallback failed:', e);
+    }
   }
 
   // Let the user know when neither source could fill in the description/cover,
   // so a blank field reads as "nothing found yet" rather than looking broken.
   if (!document.getElementById('showDesc').value || !document.getElementById('showImage').value) {
     showToast('No extra details found for this book yet — feel free to fill them in yourself.');
-  }
-}
-
-async function fillFromOpenLibrary(title, author) {
-  try {
-    const q = encodeURIComponent(`${title} ${author}`.trim());
-    const res = await fetch(`https://openlibrary.org/search.json?q=${q}&limit=1&fields=key,cover_i,first_publish_year,number_of_pages_median,first_sentence`);
-    const data = await res.json();
-    const doc = data.docs && data.docs[0];
-    if (!doc) return;
-
-    if (!document.getElementById('showImage').value && doc.cover_i) {
-      document.getElementById('showImage').value = `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg`;
-    }
-    if (!document.getElementById('showYear').value && doc.first_publish_year) {
-      document.getElementById('showYear').value = doc.first_publish_year;
-    }
-    if (!document.getElementById('showRuntime').value && doc.number_of_pages_median) {
-      document.getElementById('showRuntime').value = doc.number_of_pages_median;
-    }
-    if (!document.getElementById('showDesc').value) {
-      let filledDesc = false;
-      if (doc.key) {
-        try {
-          const workRes = await fetch(`https://openlibrary.org${doc.key}.json`);
-          const work = await workRes.json();
-          const desc = typeof work.description === 'string' ? work.description : work.description?.value;
-          if (desc) {
-            document.getElementById('showDesc').value = desc.replace(/<[^>]+>/g, '');
-            filledDesc = true;
-          }
-        } catch(e) { /* work lookup is best-effort */ }
-      }
-      if (!filledDesc && doc.first_sentence?.[0]) {
-        document.getElementById('showDesc').value = doc.first_sentence[0];
-      }
-    }
-  } catch(e) {
-    console.warn('Open Library fallback failed:', e);
   }
 }
 
