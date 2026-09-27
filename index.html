@@ -1481,7 +1481,14 @@ const ADMIN_HOUSEHOLD = 'Carolyn & Cos';
 // ── SHARE SUGGESTION ─────────────────────────────────────────────────────────
 let currentSuggestionShow = null;
 
-function shareSuggestion(id) {
+function generateShortCode(len = 7) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let code = '';
+  for (let i = 0; i < len; i++) code += chars[Math.floor(Math.random() * chars.length)];
+  return code;
+}
+
+async function shareSuggestion(id) {
   const show = localShows.find(s => s.id === id);
   if (!show) return;
   currentSuggestionShow = show;
@@ -1491,9 +1498,26 @@ function shareSuggestion(id) {
     series: show.series, episodes: show.episodes, image: show.image,
     type: show.type || 'tv', year: show.year, runtime: show.runtime,
   };
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   const base = window.location.href.split('?')[0].split('#')[0];
-  const url = `${base}?suggest=${encoded}`;
+  let url = null;
+
+  // Try a short Supabase-backed link first; fall back to the old long encoded URL if that fails
+  try {
+    const code = generateShortCode();
+    const res = await fetch(`${SUPA_URL}/rest/v1/shared_suggestions`, {
+      method: 'POST',
+      headers: { ...HEADERS, Prefer: 'return=minimal' },
+      body: JSON.stringify({ id: code, payload: data }),
+    });
+    if (res.ok) url = `${base}?s=${code}`;
+  } catch(e) {
+    console.warn('Short link creation failed, falling back to long link:', e);
+  }
+
+  if (!url) {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+    url = `${base}?suggest=${encoded}`;
+  }
 
   document.getElementById('shareSuggestionName').textContent = show.name;
   document.getElementById('shareSuggestionLink').textContent = url;
@@ -1530,6 +1554,7 @@ function shareSuggestionWhatsApp() {
     ? (show.runtime ? `📄 ${show.runtime} pages` : '')
     : `📂 ${show.series || 1} series · ${show.episodes || 1} episodes per series`;
   const desc = show.desc ? `\n\n${show.desc}` : '';
+  const listWord = show.type === 'book' ? 'reading list' : 'watchlist';
 
   const lines = [
     `${getTypeIcon(show.type)} *${show.name}*`,
@@ -1538,7 +1563,7 @@ function shareSuggestionWhatsApp() {
     seriesInfo,
     desc,
     `\nI think you'd enjoy this!`,
-    url ? `\nIf you use the TV app, tap the link to add it to your watchlist:\n${url}` : '',
+    url ? `\nIf you use the Entertainments app, tap the link to add it to your ${listWord}:\n${url}` : '',
   ].filter(Boolean).join('\n');
 
   window.open(`https://wa.me/?text=${encodeURIComponent(lines)}`, '_blank');
@@ -1549,9 +1574,27 @@ function shareSuggestionNative() {
 }
 
 // ── INCOMING SUGGESTION ───────────────────────────────────────────────────────
-function checkIncomingSuggestion() {
+async function checkIncomingSuggestion() {
   const params = new URLSearchParams(window.location.search);
+  const code = params.get('s');
   const encoded = params.get('suggest');
+
+  if (code) {
+    window.history.replaceState({}, '', window.location.pathname);
+    try {
+      const res = await fetch(`${SUPA_URL}/rest/v1/shared_suggestions?id=eq.${encodeURIComponent(code)}&select=payload`, { headers: HEADERS });
+      const rows = await res.json();
+      if (rows && rows[0]) {
+        showIncomingSuggestion(rows[0].payload);
+        return true;
+      }
+      showToast("This suggestion link has expired or isn't valid.");
+    } catch(e) {
+      console.warn('Failed to load shared suggestion:', e);
+    }
+    return false;
+  }
+
   if (!encoded) return false;
   try {
     const data = JSON.parse(decodeURIComponent(escape(atob(encoded))));
