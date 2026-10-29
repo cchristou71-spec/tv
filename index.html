@@ -1735,6 +1735,11 @@ function setTypeFilter(val) {
   render();
 }
 
+function householdMembers() {
+  // e.g. "Carolyn & Cos" -> ['Carolyn','Cos']
+  return (currentHousehold || '').split(/\s*(?:&|\band\b|\+)\s*/i).map(n => n.trim()).filter(Boolean).slice(0, 4).filter(() => /(&|\band\b|\+)/i.test(currentHousehold));
+}
+
 function updateFilterBar() {
   const filterBar = document.getElementById('filterBar');
   if (currentTab !== 'suggested') { filterBar.style.display = 'none'; return; }
@@ -1747,7 +1752,7 @@ function updateFilterBar() {
     sectionShows.filter(s => s.list === 'suggested' && s.suggestedFor)
       .map(s => s.suggestedFor.trim()).filter(Boolean)
   )];
-  const allNames = ['All', 'Both', ...names.filter(n => n !== 'Both' && n !== 'All')];
+  const allNames = ['All', 'Both', ...[...new Set([...householdMembers(), ...names])].filter(n => n !== 'Both' && n !== 'All')];
   document.getElementById('filterNames').innerHTML = allNames.map(n => {
     const val = n === 'All' ? 'all' : n;
     const active = val === currentFilter || (n === 'All' && currentFilter === 'all');
@@ -2218,7 +2223,7 @@ function populateSFSuggestions() {
     localShows.filter(s => s.suggestedFor).map(s => s.suggestedFor.trim())
   )];
   // Always include Both as first option
-  const options = ['Both', ...existing.filter(n => n !== 'Both')];
+  const options = ['Both', ...[...new Set([...householdMembers(), ...existing])].filter(n => n !== 'Both')];
   const el = document.getElementById('sfSuggestions');
   if (!el) return;
   el.innerHTML = options.map(n =>
