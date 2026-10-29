@@ -1038,8 +1038,8 @@
         <label class="form-label">Description</label>
         <textarea class="form-textarea" id="showDesc" placeholder="Brief description…"></textarea>
       </div>
-      <div class="form-group" id="suggestedForGroup" style="display:none">
-        <label class="form-label">Suggested For</label>
+      <div class="form-group" id="suggestedForGroup">
+        <label class="form-label">👤 Who is this for?</label>
         <input class="form-input" id="showSuggestedFor" placeholder="e.g. Both, Carolyn, Cos…" value="Both">
         <div id="sfSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
@@ -1718,7 +1718,7 @@ function shareNative() {
 }
 
 
-let currentFilter = 'Both';
+let currentFilter = 'all';
 let currentTypeFilter = 'tv';
 
 function setFilter(val) {
@@ -1742,14 +1742,13 @@ function householdMembers() {
 
 function updateFilterBar() {
   const filterBar = document.getElementById('filterBar');
-  if (currentTab !== 'suggested') { filterBar.style.display = 'none'; return; }
   filterBar.style.display = 'flex';
 
   const sectionShows = currentSection === 'books'
     ? localShows.filter(s => s.type === 'book')
     : localShows.filter(s => (s.type || 'tv') !== 'book');
   const names = [...new Set(
-    sectionShows.filter(s => s.list === 'suggested' && s.suggestedFor)
+    sectionShows.filter(s => s.suggestedFor)
       .map(s => s.suggestedFor.trim()).filter(Boolean)
   )];
   const allNames = ['All', 'Both', ...[...new Set([...householdMembers(), ...names])].filter(n => n !== 'Both' && n !== 'All')];
@@ -1823,7 +1822,7 @@ function render() {
     : shows.filter(s => (s.type || 'tv') !== 'book');
 
   // Apply suggested-for person filter
-  if (currentTab === 'suggested' && currentFilter !== 'all') {
+  if (currentFilter !== 'all') {
     shows = shows.filter(s => {
       const sf = (s.suggestedFor || 'Both');
       if (currentFilter === 'Both') return sf === 'Both';
@@ -1897,7 +1896,7 @@ function showCard(show) {
         <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
       </div>`;
 
-  const suggestedForBadge = (show.list === 'suggested' && show.suggestedFor)
+  const suggestedForBadge = (show.suggestedFor)
     ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(138,100,180,0.12);border:1px solid rgba(138,100,180,0.3);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:#c0a0e8;font-family:'DM Mono',monospace;margin-top:0.5rem">👤 ${show.suggestedFor}</div>`
     : '';
 
@@ -2085,7 +2084,7 @@ function openAddModal() {
   document.getElementById('showRecommendedBy').value = '';
   populateRBSuggestions();
   document.getElementById('showList').value = currentTab;
-  document.getElementById('suggestedForGroup').style.display = currentTab === 'suggested' ? '' : 'none';
+  document.getElementById('suggestedForGroup').style.display = '';
   populateSFSuggestions();
   document.getElementById('aiLoading').style.display = 'none';
   document.getElementById('searchResults').style.display = 'none';
@@ -2121,7 +2120,7 @@ function editShow(id) {
   document.getElementById('showRecommendedBy').value = show.recommendedBy || '';
   populateRBSuggestions();
   document.getElementById('showList').value = show.list || currentTab;
-  document.getElementById('suggestedForGroup').style.display = (show.list === 'suggested') ? '' : 'none';
+  document.getElementById('suggestedForGroup').style.display = '';
   document.getElementById('aiLoading').style.display = 'none';
   document.getElementById('searchResults').style.display = 'none';
   setType(show.type || 'tv', false);
@@ -2208,8 +2207,8 @@ async function saveShow() {
 
 function onListChange() {
   const list = document.getElementById('showList').value;
-  document.getElementById('suggestedForGroup').style.display = list === 'suggested' ? '' : 'none';
-  if (list === 'suggested') populateSFSuggestions();
+  document.getElementById('suggestedForGroup').style.display = '';
+  populateSFSuggestions();
 }
 
 function setSuggestedFor(val) {
@@ -2253,8 +2252,8 @@ function populateRBSuggestions() {
 
 function onListChange() {
   const list = document.getElementById('showList').value;
-  document.getElementById('suggestedForGroup').style.display = list === 'suggested' ? '' : 'none';
-  if (list === 'suggested') populateSFSuggestions();
+  document.getElementById('suggestedForGroup').style.display = '';
+  populateSFSuggestions();
 }
 
 
