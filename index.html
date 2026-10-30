@@ -2022,6 +2022,9 @@ function openDetail(id) {
         ${show.list !== 'watched' ? `<button class="btn-sm success" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watched')">${watchedLabel}</button>` : ''}
         ${show.list !== 'watching' ? `<button class="btn-sm" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','watching')">${watchingLabel}</button>` : ''}
         ${show.list !== 'suggested' ? `<button class="btn-sm" style="flex:none;padding:8px 16px" onclick="moveShow('${id}','suggested')">✨ Move to Suggested</button>` : ''}
+        ${(show.type || 'tv') === 'tv' ? (show.newSeason
+          ? `<button class="btn-sm" style="flex:none;padding:8px 16px;border-color:#50c88c;color:#7fe0b0" onclick="seasonArrived('${id}');closeDetail()">▶️ Season available</button><button class="btn-sm" style="flex:none;padding:8px 16px" onclick="toggleNewSeason('${id}')">✖ Clear new season</button>`
+          : `<button class="btn-sm" style="flex:none;padding:8px 16px;border-color:#50c88c;color:#7fe0b0" onclick="toggleNewSeason('${id}')">🔜 New season coming</button>`) : ''}
       </div>
       <div style="display:flex;gap:8px;margin-top:0.75rem;flex-wrap:wrap">
         <button class="btn-sm" style="flex:none;padding:8px 16px" onclick="closeDetail();editShow('${id}')">✏️ Edit</button>
@@ -2090,6 +2093,24 @@ async function moveShow(id, list) {
   await dbSave(show);
   closeDetail();
   showToast(`Moved to ${getHeadings()[list]}`);
+}
+
+async function toggleNewSeason(id) {
+  const show = localShows.find(s => s.id === id);
+  if (!show) return;
+  if (show.newSeason) {
+    show.newSeason = false;
+    show.newSeasonDate = '';
+  } else {
+    const d = prompt('Expected date for the new season? (e.g. Autumn 2027 – leave blank if unknown)', '');
+    if (d === null) return;
+    show.newSeason = true;
+    show.newSeasonDate = d.trim();
+  }
+  await dbSave(show);
+  closeDetail();
+  render();
+  showToast(show.newSeason ? '🔜 Marked as new season coming' : 'New season flag cleared');
 }
 
 async function seasonArrived(id) {
