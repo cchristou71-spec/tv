@@ -1049,6 +1049,11 @@
         <div id="rbSuggestions" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
       <div id="tvFields">
+        <div class="form-group">
+          <label class="form-label">🔜 New season coming</label>
+          <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;margin-bottom:6px"><input type="checkbox" id="showNewSeason" onchange="document.getElementById('showNewSeasonDate').style.display = this.checked ? '' : 'none'"> New season announced – not on the app yet</label>
+          <input class="form-input" id="showNewSeasonDate" style="display:none" placeholder="Expected date, e.g. Autumn 2027 or 12 Mar 2027">
+        </div>
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Number of Series</label>
@@ -1344,6 +1349,9 @@ async function dbLoad() {
       runtime: r.runtime,
       suggestedFor: r.suggested_for || '',
       recommendedBy: r.recommended_by || '',
+      newSeason: !!r.new_season,
+      newSeasonDate: r.new_season_date || '',
+      nsCols: ('new_season' in r),
     }));
     render();
   } catch(e) {
@@ -1374,11 +1382,21 @@ async function dbSave(show) {
     suggested_for: show.suggestedFor || null,
     recommended_by: show.recommendedBy || null,
   };
-  await fetch(`${SUPA_URL}/rest/v1/tv_shows`, {
-    method: 'POST',
-    headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' },
-    body: JSON.stringify(row)
-  });
+  if (show.newSeason || show.newSeasonDate || show.nsCols) {
+    row.new_season = !!show.newSeason;
+    row.new_season_date = show.newSeasonDate || null;
+  }
+  try {
+    const res = await fetch(`${SUPA_URL}/rest/v1/tv_shows`, {
+      method: 'POST',
+      headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' },
+      body: JSON.stringify(row)
+    });
+    if (!res.ok) throw new Error(await res.text());
+  } catch (e) {
+    console.error('Save failed', e);
+    showToast('Save failed – new season columns may need adding in Supabase');
+  }
 }
 
 async function dbDelete(id) {
@@ -1754,9 +1772,9 @@ function updateFilterBar() {
   const allNames = ['All', 'Both', ...[...new Set([...householdMembers(), ...names])].filter(n => n !== 'Both' && n !== 'All')];
   document.getElementById('filterNames').innerHTML = allNames.map(n => {
     const val = n === 'All' ? 'all' : n;
-    const active = val === currentFilter || (n === 'All' && currentFilter === 'all');
+    const active = val === currentFilter;
     return `<button class="filter-btn ${active ? 'active' : ''}" onclick="setFilter('${val}')">${n === 'Both' ? '👥 Both' : n === 'All' ? 'All' : '👤 ' + n}</button>`;
-  }).join('');
+  }).join('') + `<button class="filter-btn ${currentFilter === '__newseason' ? 'active' : ''}" onclick="setFilter('__newseason')">🔜 New season</button>`;
 
   // Update type filter buttons
   ['All','TV','Film'].forEach(n => {
@@ -1822,7 +1840,9 @@ function render() {
     : shows.filter(s => (s.type || 'tv') !== 'book');
 
   // Apply suggested-for person filter
-  if (currentFilter !== 'all') {
+  if (currentFilter === '__newseason') {
+    shows = shows.filter(s => s.newSeason);
+  } else if (currentFilter !== 'all') {
     shows = shows.filter(s => {
       const sf = (s.suggestedFor || 'Both');
       if (currentFilter === 'Both') return sf === 'Both';
@@ -1904,6 +1924,10 @@ function showCard(show) {
     ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(232,197,71,0.08);border:1px solid rgba(232,197,71,0.25);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:var(--gold);font-family:'DM Mono',monospace;margin-top:0.5rem;margin-left:6px">💬 Rec. by ${show.recommendedBy}</div>`
     : '';
 
+  const newSeasonBadge = show.newSeason
+    ? `<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(80,200,140,0.12);border:1px solid rgba(80,200,140,0.35);border-radius:6px;padding:3px 8px;font-size:0.72rem;color:#7fe0b0;font-family:'DM Mono',monospace;margin-top:0.5rem;margin-left:6px">🔜 New season${show.newSeasonDate ? ': ' + show.newSeasonDate : ' coming'}</div>`
+    : '';
+
   const actionsLabel = isBook ? '📖 Details & Options' : isFilm ? 'ℹ️ Details & Options' : '📋 Episodes & Options';
 
   return `
@@ -1918,12 +1942,14 @@ function showCard(show) {
       <div class="show-desc">${show.desc || 'No description.'}</div>
       ${suggestedForBadge}
       ${recommendedByBadge}
+      ${newSeasonBadge}
       ${schedule}
       <div class="show-stats">${statsHtml}</div>
       ${progressHtml}
     </div>
     <div class="card-actions" onclick="event.stopPropagation()">
       <button class="btn-sm" onclick="openDetail('${show.id}')">${actionsLabel}</button>
+      ${show.newSeason ? `<button class="btn-sm" onclick="seasonArrived('${show.id}')">▶️ Season available</button>` : ''}
     </div>
   </div>`;
 }
@@ -2066,6 +2092,18 @@ async function moveShow(id, list) {
   showToast(`Moved to ${getHeadings()[list]}`);
 }
 
+async function seasonArrived(id) {
+  const show = localShows.find(s => s.id === id);
+  if (!show) return;
+  show.series = (parseInt(show.series) || 1) + 1;
+  show.list = 'watching';
+  show.newSeason = false;
+  show.newSeasonDate = '';
+  await dbSave(show);
+  render();
+  showToast(`Series ${show.series} added – moved to ${getHeadings()['watching']}`);
+}
+
 // ── ADD / EDIT ────────────────────────────────────────────────────────────────
 function openAddModal() {
   editingId = null;
@@ -2082,6 +2120,9 @@ function openAddModal() {
   document.getElementById('showRuntime').value = '';
   document.getElementById('showSuggestedFor').value = 'Both';
   document.getElementById('showRecommendedBy').value = '';
+  document.getElementById('showNewSeason').checked = false;
+  document.getElementById('showNewSeasonDate').value = '';
+  document.getElementById('showNewSeasonDate').style.display = 'none';
   populateRBSuggestions();
   document.getElementById('showList').value = currentTab;
   document.getElementById('suggestedForGroup').style.display = '';
@@ -2118,6 +2159,9 @@ function editShow(id) {
   populateSFSuggestions();
   setSuggestedFor(sf);
   document.getElementById('showRecommendedBy').value = show.recommendedBy || '';
+  document.getElementById('showNewSeason').checked = !!show.newSeason;
+  document.getElementById('showNewSeasonDate').value = show.newSeasonDate || '';
+  document.getElementById('showNewSeasonDate').style.display = show.newSeason ? '' : 'none';
   populateRBSuggestions();
   document.getElementById('showList').value = show.list || currentTab;
   document.getElementById('suggestedForGroup').style.display = '';
@@ -2174,6 +2218,9 @@ async function saveShow() {
     list,
     suggestedFor: document.getElementById('showSuggestedFor').value.trim(),
     recommendedBy: document.getElementById('showRecommendedBy').value.trim(),
+    newSeason: currentType === 'tv' && document.getElementById('showNewSeason').checked,
+    newSeasonDate: currentType === 'tv' && document.getElementById('showNewSeason').checked ? document.getElementById('showNewSeasonDate').value.trim() : '',
+    nsCols: existing ? !!existing.nsCols : false,
     type: currentType,
     year: document.getElementById('showYear').value || null,
     runtime: document.getElementById('showRuntime').value || null,
